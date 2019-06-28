@@ -15,6 +15,10 @@ static FlutterMethodChannel *channel;
 @property (nonatomic, retain) UIViewController *viewController;
 @property (nonatomic, retain) UIViewController *qrcodeViewController;
 @property (nonatomic) BOOL isFrontCamera;
+//zq modify start
+@property(retain,nonatomic) NSTimer* nsTime;
+@property (nonatomic, strong) UIView *scanLineView;
+//zq modify end
 @end
 
 @implementation QRCodeReaderPlugin {
@@ -27,6 +31,12 @@ float width;
 float landscapeheight;
 float portraitheight;
 
+//zq modify start
+float borderWidth ;
+float borderHeight ;
+float borderX;
+float borderY;
+//zq modify end
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     FlutterMethodChannel* channel = [FlutterMethodChannel 
@@ -89,6 +99,14 @@ float portraitheight;
 -(void)loadViewQRCode {
     portraitheight = height = [UIScreen mainScreen].applicationFrame.size.height;
     landscapeheight = width = [UIScreen mainScreen].applicationFrame.size.width;
+    //zq modify start
+    borderWidth = width/2;
+    borderWidth = width/2;
+    borderHeight = width/2;
+    borderX = width/2-borderWidth/2;
+    borderY = height/2-borderWidth/2;
+    //zq modify end
+    
     if(UIDeviceOrientationIsLandscape([[UIDevice currentDevice] orientation])){
         landscapeheight = height;
         portraitheight = width;
@@ -112,17 +130,42 @@ float portraitheight;
     _captureSession = nil;
     _isReading = NO;
     
-    float borderWidth = width/2;
-    float borderHeight = width/2;
-    float borderX = width/2-borderWidth/2;
-    float borderY = height/2-borderWidth/2;
-    
-    UIView *borderView = [[UIView alloc] initWithFrame:CGRectMake(borderX, borderY, borderWidth, borderHeight)];
-    borderView.layer.borderWidth = 1;
-    borderView.layer.borderColor = [UIColor blueColor].CGColor;
+    //zq modify start
+    UIImageView *borderView = [[UIImageView alloc] initWithFrame:CGRectMake(borderX, borderY, borderWidth, borderHeight)];
+    [borderView setImage:[UIImage imageNamed:@"scanborder"]];
     [_qrcodeViewController.view addSubview:borderView];
+    
+    //扫描框里的动态效果
+    _scanLineView = [[UIView alloc] initWithFrame:CGRectMake(borderX+3, borderY, borderWidth-6, 1)];
+    [_scanLineView setBackgroundColor:[UIColor colorWithRed:151/255.0 green:208/255.0 blue:239/255.0 alpha:1] ];//#1296db
+    [_qrcodeViewController.view addSubview:_scanLineView];
+    
+    [self startTimer];
+    //zq modify end
 }
 
+//zq modify start
+// 启动定时器
+-(void)startTimer{
+    _nsTime = [NSTimer scheduledTimerWithTimeInterval:0.1 target:self selector:@selector(updateTime:) userInfo:@"" repeats:YES];
+}
+
+-(void)updateTime:(NSTimer*) timer{
+    CGFloat tmp = _scanLineView.frame.origin.y + 5.0;
+    if(tmp-borderY>=borderHeight){
+        [_scanLineView setFrame:CGRectMake(borderX+3, borderY, borderWidth-6, 1)];
+    }else{
+       [_scanLineView setFrame:CGRectMake(borderX+3, tmp, borderWidth-6, 1)];
+    }
+    
+    
+}
+
+// 停止定时器
+-(void)stopTimer{
+    [_nsTime invalidate];
+}
+//zq modify end
 
 - (BOOL)startReading {
     if (_isReading) return NO;
@@ -196,6 +239,7 @@ float portraitheight;
     _isReading = NO;
     [self closeQRCodeView];
     _result(nil);
+    [self stopTimer];//关闭扫描组件的动画
 }
 
 
