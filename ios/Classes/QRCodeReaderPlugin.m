@@ -111,7 +111,16 @@ float portraitheight;
     [_qrcodeViewController.view addSubview:_buttonCancel];
     _captureSession = nil;
     _isReading = NO;
-
+    
+    float borderWidth = width/2;
+    float borderHeight = width/2;
+    float borderX = width/2-borderWidth/2;
+    float borderY = height/2-borderWidth/2;
+    
+    UIView *borderView = [[UIView alloc] initWithFrame:CGRectMake(borderX, borderY, borderWidth, borderHeight)];
+    borderView.layer.borderWidth = 1;
+    borderView.layer.borderColor = [UIColor blueColor].CGColor;
+    [_qrcodeViewController.view addSubview:borderView];
 }
 
 
